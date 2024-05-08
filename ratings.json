@@ -1,0 +1,30 @@
+[
+  [
+    286988389100727326320952908646776336555,
+    "Yahya Emara",
+    [
+      [
+        112014233576133799979391417188694796018,
+        "Alkinoos",
+        {
+          "rating": "8",
+          "reason": "Rating: 8/10, 'I'd like to talk to Alkinoos again because we share similar interests in AI, machine learning, and NLP. Our conversation flowed well, and I found his background in Electrical Engineering and robotics fascinating. I'm intrigued by the potential intersection between his work and my current project. Alkinoos is enthusiastic and open to exploring collaboration opportunities, which I appreciate.'"
+        }
+      ]
+    ]
+  ],
+  [
+    112014233576133799979391417188694796018,
+    "Alkinoos",
+    [
+      [
+        286988389100727326320952908646776336555,
+        "Yahya Emara",
+        {
+          "rating": -1,
+          "reason": "Based on this conversation, I would say that I would not like to talk to this person again. I find their approach to NLP to be quite naive and unsophisticated. They seem to be more focused on developing a model rather than understanding the fundamental concepts of NLP."
+        }
+      ]
+    ]
+  ]
+]

@@ -7,7 +7,6 @@ from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-
 #DUMMY DATASET
 arnie_data = {
         "id": 1,
@@ -48,64 +47,62 @@ emma_data = {
         "hobbies": "Climbing definitely. I recently tried doing some muscle pump too."
 }
 
-# persons = [arnie_data, alice_data, emma_data]
 
-
-#REAL DATASET
-persons=[]
-
-with open("data/lunch_submissions.csv", 'r') as file:
-    reader = csv.DictReader(file)
-    for row in reader:
-        persons.append(row)
-
-# Preprocess data
-concatenated_strings = [f"{p['name']} : {p['uni']} : {p['studies']} : {p['sph']} : {p['experiences']} : {p['biggest_achievement']} : {p['biggest_failure']} : {p['success_definition']} : {p['hobbies']}" for p in persons]
-
-# Embed data
-model = SentenceTransformer('all-MiniLM-L6-v2')
-embeddings = model.encode(concatenated_strings)
-
-# Perform dimensionality reduction using PCA
-pca = PCA(n_components=3)
-reduced_embeddings = pca.fit_transform(embeddings)
-
-# Create a 3D plot
-fig = plt.figure(figsize=(8, 6))
-ax = fig.add_subplot(111, projection='3d')
-
-# Plot data points
-for i, person in enumerate(persons):
-    ax.scatter(reduced_embeddings[i, 0], reduced_embeddings[i, 1], reduced_embeddings[i, 2], label=person['name'])
-
-# Set plot labels and title
-ax.set_xlabel('PC1')
-ax.set_ylabel('PC2')
-ax.set_zlabel('PC3')
-ax.set_title('Person Embeddings in 3D Space')
-
-# Add a legend
-ax.legend()
-
-# Streamlit app
-def main():
-    st.title("Person Embeddings Visualization")
-    
-    # Display the plot using Streamlit
-    st.pyplot(fig)
-    
-    # Calculate similarity
-    query_sentence = st.text_input("Enter a query sentence:")
-    if query_sentence:
-        query_embedding = model.encode([query_sentence])
-        similarities = cosine_similarity(query_embedding, embeddings)
+class Embedder:
+    def __init__(self, data:list, model:str=None):
+        #TODO: Take the flags from the User Model
+        self.data = data
+        self.data_str = [f"{p['name']} : {p['uni']} : {p['studies']} : {p['sph']} : {p['experiences']} : {p['biggest_achievement']} : {p['biggest_failure']} : {p['success_definition']} : {p['hobbies']}" for p in data]
         
-        # Retrieve most similar person
-        most_similar_index = similarities.argmax()
-        most_similar_person = persons[most_similar_index]
-        
-        st.subheader("Most Similar Person")
-        st.write(most_similar_person)
+        all_minilm_l6_v2 = SentenceTransformer('all-MiniLM-L6-v2')
+        bert_large = SentenceTransformer("sentence-transformers/stsb-bert-large")
 
-if __name__ == '__main__':
-    main()
+        if model == "all_minilm_l6_v2":
+            self.model = all_minilm_l6_v2
+        else:
+            self.model = bert_large
+        
+
+    def embed(self):
+        embeddings = self.model.encode(self.data_str)
+
+        pca = PCA(n_components=3)
+        return pca.fit_transform(embeddings)
+
+    def render(self, embeddings):
+        # Create a 3D plot
+        fig = plt.figure(figsize=(8, 6))
+        ax = fig.add_subplot(111, projection='3d')
+
+        # Plot data points
+        for i, person in enumerate(self.data):
+            ax.scatter(embeddings[i, 0], embeddings[i, 1], embeddings[i, 2], label=person['name'])
+
+        # Set plot labels and title
+        ax.set_xlabel('PC1')
+        ax.set_ylabel('PC2')
+        ax.set_zlabel('PC3')
+        ax.set_title('Person Embeddings in 3D Space')
+
+        # Add a legend
+        ax.legend()
+
+        st.title("Person Embeddings Visualization")
+    
+        # Display the plot using Streamlit
+        st.pyplot(fig)
+        # st.pyplot(plt.legend(loc='upper right'))
+        
+        # Calculate similarity
+        query_sentence = st.text_input("Enter a query sentence:")
+        if query_sentence:
+            query_embedding = self.model.encode([query_sentence])
+            similarities = cosine_similarity(query_embedding, embeddings)
+            
+            # Retrieve most similar person
+            top_3_similar_indices = similarities.argsort()[0, -3:][::-1]
+            top_3_similar_persons = [self.data[idx] for idx in top_3_similar_indices]
+            
+            st.subheader("Top 3 Most Similar Persons")
+            for person in top_3_similar_persons:
+                st.write(person)

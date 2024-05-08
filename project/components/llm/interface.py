@@ -2,6 +2,7 @@
 class LLM:
     def __init__(self, model=None) -> None:
         self.model = model
+        self.system_prompt = ""
 
     def query(self, prompt:str) -> str:
         return NotImplementedError("The subclass must implement this interface!")

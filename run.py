@@ -2,12 +2,23 @@ import uvicorn
 import random
 
 from server.api import app
-from project.Simulation import Simulation
-from project.components.agent.interface import Agent
+
+from project.components.data_loaders.csv_loader import CSVLoader
 
 from project.components.llm.groq import GroqLLM
+from project.components.agent.interface import Agent
+
+from project.Simulation import Simulation
+from project.Embedder import Embedder
+from project.InPrompt import run_inprompt
 
 def main():
+
+    #FLAGS
+    simulation_flag = True
+    embeddings_flag = False
+    inprompt_flag = False
+
     llama3_8b = "llama3-8b-8192"
     llama3_70b = "llama3-70b-8192"
     
@@ -40,9 +51,22 @@ def main():
 
     dataset = [arnie_data, alice_data]
 
-    simulation = Simulation(llm=GroqLLM(model=llama3_8b))
-    simulation.load_users("data/lunch_submissions.csv", size=2)
-    simulation.run_simulation()
+    dataset = CSVLoader("data/lunch_submissions.csv")
+
+    if simulation_flag:
+        simulation = Simulation(llm=GroqLLM(model=llama3_8b))
+        simulation.load_users(dataset.users(count=2))
+        simulation.run_simulation()
+        ratings = simulation.get_ratings()
+        print(ratings)
+    
+    if embeddings_flag:
+        embedder = Embedder(dataset.users())
+        embeddings = embedder.embed()
+        embedder.render(embeddings)
+
+    if inprompt_flag:
+        response = run_inprompt()
 
 if __name__ == "__main__":
     main()

@@ -1,5 +1,8 @@
 import random
+
 import csv
+import json
+
 from .components.agent.interface import Agent
 from .components.llm.interface import LLM
 
@@ -9,18 +12,12 @@ class Simulation:
         self.llm = llm
 
     #Load all the agents
-    def load_users(self, file_path:str, size:int):
+    def load_users(self, data:list):
         agents = []
         
-        with open(file_path, 'r') as file:
-            reader = csv.DictReader(file)
-
-            for row in reader:
-                if size == 0:
-                    break
-                agent = Agent(row, self.llm)
-                agents.append(agent)
-                size -= 1
+        for row in data:
+            agent = Agent(row, self.llm)
+            agents.append(agent)
 
         self.agents = agents
 
@@ -32,27 +29,25 @@ class Simulation:
         "Here is the current discussion topic: Given your experience, try start a conversation with each other. If you can't start a conversation, then say you are not interested in a conversation", 
         "Here is the current discussion topic: If there's anything else interesting to talk about discuss it. Otherwise, if you're not interested at all in each other then, tell them this was awkward and you're not interested in speaking with each other"]
 
-        for i in range(len(self.agents)):
+        for i in range(len(self.agents)-1):
             for j in range(i+1, len(self.agents)):
-                if i == j:
-                    continue
-            #Randomly set the order of the agents
-            rand = random.randint(0, 1)
-            if rand:
-                first = self.agents[i]
-                second = self.agents[j]
-            else:
-                first = self.agents[j]
-                second = self.agents[i]
+                #Randomly set the order of the agents
+                rand = random.randint(0, 1)
+                if rand:
+                    first = self.agents[i]
+                    second = self.agents[j]
+                else:
+                    first = self.agents[j]
+                    second = self.agents[i]
 
-            for prompt in prompts:
-                first_response = first.chat(prompt, second.id)
-                second_response = second.chat(prompt + f". Here is {first.name}'s response: {first_response}", second.id)
-                first.listen(second_response, second.id)
+                for prompt in prompts:
+                    first_response = first.chat(prompt, second.id)
+                    second_response = second.chat(prompt + f". Here is {first.name}'s response: {first_response}", second.id)
+                    first.listen(second_response, second.id)
 
-                print(f"{first.name} said: {first_response}")
-                print(f"{second.name} said: {second_response}")
-                print()
+                    print(f"{first.name} said: {first_response}")
+                    print(f"{second.name} said: {second_response}")
+                    print()
 
     def get_ratings(self):
         all_agent_ratings = []
@@ -66,3 +61,9 @@ class Simulation:
         
         for agent_ratings in all_agent_ratings:
             print(f"{agent_ratings[1]}'s ratings: {agent_ratings[2]}")
+
+        # save all_agent_ratings to a json file
+        with open("ratings.json", "w") as file:
+            json.dump(all_agent_ratings, file)
+
+
